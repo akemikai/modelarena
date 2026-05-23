@@ -6,9 +6,11 @@ import { MODELS } from "@/lib/models";
 type Result = {
   status: "idle" | "running" | "done" | "error";
   content?: string;
+  reasoning?: string | null;
   error?: string;
   elapsed_ms?: number;
   completion_tokens?: number;
+  reasoning_tokens?: number;
   tokens_per_second?: string;
 };
 
@@ -16,12 +18,12 @@ const PRESETS = [
   {
     label: "🧮 Hard math",
     prompt:
-      "A fair 6-sided die is rolled until the sum of rolls exceeds 50. What is the expected number of rolls? Show your reasoning briefly.",
+      "A fair 6-sided die is rolled until the sum exceeds 50. What is the expected number of rolls? Show reasoning briefly.",
   },
   {
     label: "💻 Code task",
     prompt:
-      "Write a Python function that returns the longest palindromic substring. Use Manacher's algorithm. Include 2 test cases.",
+      "Write a Python function that returns the longest palindromic substring using Manacher's algorithm. Include 2 test cases.",
   },
   {
     label: "🎭 Creative",
@@ -46,6 +48,7 @@ export default function Home() {
     Object.fromEntries(MODELS.map((m) => [m.id, { status: "idle" }]))
   );
   const [racing, setRacing] = useState(false);
+  const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
 
   const race = useCallback(async () => {
     if (!prompt.trim() || racing) return;
@@ -78,8 +81,10 @@ export default function Home() {
             [m.id]: {
               status: "done",
               content: data.content,
+              reasoning: data.reasoning,
               elapsed_ms: data.elapsed_ms,
               completion_tokens: data.completion_tokens,
+              reasoning_tokens: data.reasoning_tokens,
               tokens_per_second: data.tokens_per_second,
             },
           }));
@@ -110,15 +115,14 @@ export default function Home() {
       <header className="mb-10 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mimo-900/30 border border-mimo-600/40 text-xs font-mono text-mimo-400 mb-4">
           <span className="w-2 h-2 rounded-full bg-mimo-500 pulse-dot" />
-          POWERED BY XIAOMI MiMo · 100T GRANT SUBMISSION
+          XIAOMI MiMo · 100T GRANT SUBMISSION
         </div>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-3">
-          Model<span className="gradient-text">Arena</span>
+          MiMo<span className="gradient-text">Arena</span>
         </h1>
         <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-          Race 5 frontier LLMs on the same prompt. See who's fastest, who's
-          smartest, and why <span className="text-mimo-400">MiMo</span> belongs
-          in the conversation.
+          Race every <span className="text-mimo-400 font-semibold">Xiaomi MiMo</span> variant on the same prompt.
+          Compare reasoning depth, speed, and style across the entire MiMo lineup.
         </p>
       </header>
 
@@ -131,7 +135,7 @@ export default function Home() {
           onChange={(e) => setPrompt(e.target.value)}
           rows={3}
           className="w-full bg-black/50 border border-zinc-800 rounded-lg p-3 text-sm font-mono text-zinc-100 focus:border-mimo-500 focus:outline-none resize-none scrollbar-thin"
-          placeholder="Type a prompt to race all 5 models..."
+          placeholder="Type a prompt to race all MiMo variants..."
         />
         <div className="flex flex-wrap gap-2 mt-3">
           {PRESETS.map((p) => (
@@ -149,7 +153,7 @@ export default function Home() {
           disabled={racing || !prompt.trim()}
           className="mt-4 w-full md:w-auto px-8 py-3 bg-mimo-500 hover:bg-mimo-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-bold rounded-lg transition glow"
         >
-          {racing ? "🏁 Racing..." : "🚀 Race All Models"}
+          {racing ? "🏁 Racing..." : "🚀 Race All MiMo Variants"}
         </button>
       </section>
 
@@ -157,10 +161,11 @@ export default function Home() {
         {MODELS.map((m) => {
           const r = results[m.id];
           const isWinner = winnerId === m.id;
+          const showR = showReasoning[m.id];
           return (
             <article
               key={m.id}
-              className={`bg-zinc-900/60 border rounded-xl p-4 flex flex-col min-h-[280px] transition ${
+              className={`bg-zinc-900/60 border rounded-xl p-4 flex flex-col min-h-[300px] transition ${
                 isWinner
                   ? "border-mimo-500 glow"
                   : m.featured
@@ -169,8 +174,8 @@ export default function Home() {
               }`}
             >
               <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className="w-2 h-2 rounded-full"
                       style={{ background: m.accent }}
@@ -178,7 +183,7 @@ export default function Home() {
                     <h3 className="font-bold text-zinc-100">{m.label}</h3>
                     {m.featured && (
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-mimo-500/20 text-mimo-400 border border-mimo-600/40">
-                        FEATURED
+                        FLAGSHIP
                       </span>
                     )}
                     {isWinner && (
@@ -198,37 +203,53 @@ export default function Home() {
                   <span className="text-zinc-600">Waiting for prompt...</span>
                 )}
                 {r.status === "running" && (
-                  <span className="text-mimo-400 pulse-dot">
-                    Generating...
-                  </span>
+                  <span className="text-mimo-400 pulse-dot">Generating...</span>
                 )}
                 {r.status === "error" && (
                   <span className="text-red-400">⚠ {r.error}</span>
                 )}
-                {r.status === "done" && r.content}
+                {r.status === "done" && (showR && r.reasoning ? r.reasoning : r.content)}
               </div>
 
               {r.status === "done" && (
-                <div className="mt-3 grid grid-cols-3 gap-2 text-xs font-mono">
-                  <div className="bg-zinc-800/50 rounded p-2 text-center">
-                    <div className="text-zinc-500">latency</div>
-                    <div className="text-zinc-100 font-bold">
-                      {r.elapsed_ms}ms
+                <>
+                  {r.reasoning && (
+                    <button
+                      onClick={() =>
+                        setShowReasoning((p) => ({ ...p, [m.id]: !p[m.id] }))
+                      }
+                      className="mt-2 text-xs font-mono text-mimo-400 hover:text-mimo-300 transition text-left"
+                    >
+                      {showR ? "← back to answer" : "🧠 view reasoning →"}
+                    </button>
+                  )}
+                  <div className="mt-3 grid grid-cols-4 gap-2 text-xs font-mono">
+                    <div className="bg-zinc-800/50 rounded p-2 text-center">
+                      <div className="text-zinc-500">latency</div>
+                      <div className="text-zinc-100 font-bold">
+                        {r.elapsed_ms}ms
+                      </div>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded p-2 text-center">
+                      <div className="text-zinc-500">tokens</div>
+                      <div className="text-zinc-100 font-bold">
+                        {r.completion_tokens}
+                      </div>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded p-2 text-center">
+                      <div className="text-zinc-500">reasoning</div>
+                      <div className="text-zinc-100 font-bold">
+                        {r.reasoning_tokens || 0}
+                      </div>
+                    </div>
+                    <div className="bg-zinc-800/50 rounded p-2 text-center">
+                      <div className="text-zinc-500">tok/s</div>
+                      <div className="text-zinc-100 font-bold">
+                        {r.tokens_per_second}
+                      </div>
                     </div>
                   </div>
-                  <div className="bg-zinc-800/50 rounded p-2 text-center">
-                    <div className="text-zinc-500">tokens</div>
-                    <div className="text-zinc-100 font-bold">
-                      {r.completion_tokens}
-                    </div>
-                  </div>
-                  <div className="bg-zinc-800/50 rounded p-2 text-center">
-                    <div className="text-zinc-500">tok/s</div>
-                    <div className="text-zinc-100 font-bold">
-                      {r.tokens_per_second}
-                    </div>
-                  </div>
-                </div>
+                </>
               )}
             </article>
           );
@@ -237,12 +258,19 @@ export default function Home() {
 
       <footer className="mt-12 text-center text-xs font-mono text-zinc-600">
         <p>
-          ModelArena · Built with Next.js + AkashML · Submission for{" "}
+          MiMoArena · Built on the official{" "}
+          <a
+            href="https://platform.xiaomimimo.com"
+            className="text-mimo-400 hover:underline"
+          >
+            Xiaomi MiMo API
+          </a>
+          {" · "}
           <a
             href="https://100t.xiaomimimo.com"
             className="text-mimo-400 hover:underline"
           >
-            Xiaomi MiMo 100T Grant
+            100T Token Plan submission
           </a>
         </p>
       </footer>

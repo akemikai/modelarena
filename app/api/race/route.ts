@@ -5,18 +5,21 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const BASE_URL =
-  process.env.AKASHML_BASE_URL || "https://api.akashml.com/v1";
+  process.env.MIMO_BASE_URL || "https://api.xiaomimimo.com/v1";
+
+const SYSTEM_PROMPT =
+  "You are MiMo, an AI assistant developed by Xiaomi. Your knowledge cutoff is December 2024. Be concise, accurate, and helpful.";
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.AKASHML_API_KEY;
+  const apiKey = process.env.MIMO_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: "AKASHML_API_KEY not configured" }),
+      JSON.stringify({ error: "MIMO_API_KEY not configured" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  let body: { model?: string; prompt?: string; system?: string };
+  let body: { model?: string; prompt?: string };
   try {
     body = await req.json();
   } catch {
@@ -25,7 +28,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { model, prompt, system } = body;
+  const { model, prompt } = body;
   if (!model || !prompt) {
     return new Response(
       JSON.stringify({ error: "model and prompt required" }),
@@ -40,10 +43,6 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const messages: Array<{ role: string; content: string }> = [];
-  if (system) messages.push({ role: "system", content: system });
-  messages.push({ role: "user", content: prompt });
-
   const start = Date.now();
   try {
     const upstream = await fetch(`${BASE_URL}/chat/completions`, {
@@ -54,9 +53,13 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model,
-        messages,
-        max_tokens: 800,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: 800,
         temperature: 0.7,
+        top_p: 0.95,
       }),
     });
 
@@ -73,20 +76,25 @@ export async function POST(req: NextRequest) {
 
     const data = await upstream.json();
     const elapsed = Date.now() - start;
-    const content =
-      data?.choices?.[0]?.message?.content ?? "(no content)";
+    const choice = data?.choices?.[0]?.message ?? {};
+    const content = choice.content ?? "(no content)";
+    const reasoning = choice.reasoning_content ?? null;
     const usage = data?.usage ?? {};
     const promptTokens = usage.prompt_tokens ?? 0;
     const completionTokens = usage.completion_tokens ?? 0;
+    const reasoningTokens =
+      usage.completion_tokens_details?.reasoning_tokens ?? 0;
     const tps =
       elapsed > 0 ? (completionTokens / (elapsed / 1000)).toFixed(1) : "0";
 
     return new Response(
       JSON.stringify({
         content,
+        reasoning,
         elapsed_ms: elapsed,
         prompt_tokens: promptTokens,
         completion_tokens: completionTokens,
+        reasoning_tokens: reasoningTokens,
         tokens_per_second: tps,
         model,
       }),

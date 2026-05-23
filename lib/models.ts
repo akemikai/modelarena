@@ -5,43 +5,49 @@ export type ModelDef = {
   accent: string;
   featured?: boolean;
   blurb: string;
+  tier: string;
 };
 
 export const MODELS: ModelDef[] = [
   {
-    id: "MiMo-VL-7B-RL-2508",
-    label: "MiMo VL 7B",
-    vendor: "Xiaomi",
+    id: "mimo-v2.5-pro",
+    label: "MiMo v2.5 Pro",
+    vendor: "Xiaomi · Flagship",
     accent: "#f97316",
     featured: true,
-    blurb: "Xiaomi's flagship multimodal reasoning model",
+    tier: "Reasoning",
+    blurb: "Latest flagship with deep chain-of-thought reasoning",
   },
   {
-    id: "deepseek-ai/DeepSeek-V3.1",
-    label: "DeepSeek V3.1",
-    vendor: "DeepSeek",
-    accent: "#3b82f6",
-    blurb: "671B MoE, strong on code & math",
+    id: "mimo-v2.5",
+    label: "MiMo v2.5",
+    vendor: "Xiaomi · Standard",
+    accent: "#fb923c",
+    tier: "Balanced",
+    blurb: "Balanced reasoning + speed, the daily driver",
   },
   {
-    id: "Qwen/Qwen3-30B-A3B",
-    label: "Qwen3 30B-A3B",
-    vendor: "Alibaba",
+    id: "mimo-v2-pro",
+    label: "MiMo v2 Pro",
+    vendor: "Xiaomi · Agentic",
+    accent: "#ef4444",
+    tier: "Agent",
+    blurb: "Agent-era foundation model, strong on tool use",
+  },
+  {
+    id: "mimo-v2-omni",
+    label: "MiMo v2 Omni",
+    vendor: "Xiaomi · Multimodal",
     accent: "#a855f7",
-    blurb: "Hybrid reasoning, multilingual",
+    tier: "Omni",
+    blurb: "Omni-modal — sees, understands and acts",
   },
   {
-    id: "meta-llama/Llama-3.3-70B",
-    label: "Llama 3.3 70B",
-    vendor: "Meta",
-    accent: "#06b6d4",
-    blurb: "Meta's open-weight workhorse",
-  },
-  {
-    id: "google/gemma-2-27b-it",
-    label: "Gemma 2 27B",
-    vendor: "Google",
+    id: "mimo-v2-flash",
+    label: "MiMo v2 Flash",
+    vendor: "Xiaomi · Speed",
     accent: "#22c55e",
-    blurb: "Compact but capable",
+    tier: "Fast",
+    blurb: "Optimized for low-latency, high-throughput",
   },
 ];
