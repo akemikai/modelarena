@@ -43,7 +43,7 @@ const PRESETS = [
 ];
 
 export default function Home() {
-  const [prompt, setPrompt] = useState(PRESETS[0].prompt);
+  const [prompt, setPrompt] = useState(PRESETS[2].prompt);
   const [results, setResults] = useState<Record<string, Result>>(
     Object.fromEntries(MODELS.map((m) => [m.id, { status: "idle" }]))
   );
@@ -208,7 +208,14 @@ export default function Home() {
                 {r.status === "error" && (
                   <span className="text-red-400">⚠ {r.error}</span>
                 )}
-                {r.status === "done" && (showR && r.reasoning ? r.reasoning : r.content)}
+                {r.status === "done" &&
+                  (showR && r.reasoning
+                    ? r.reasoning
+                    : r.content && r.content !== "(no content)"
+                    ? r.content
+                    : r.reasoning
+                    ? `🧠 (model spent all tokens on reasoning — showing thought process)\n\n${r.reasoning}`
+                    : "(no content)")}
               </div>
 
               {r.status === "done" && (
